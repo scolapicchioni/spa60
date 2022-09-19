@@ -1,6 +1,6 @@
-# Backend: Web API with ASP.NET Core 3.0 and Visual Studio 2019
+# Backend: Web API with ASP.NET Core 60 and Visual Studio 2022
 
-In this lab we're going to build a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 3.0 Web API](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0).
+In this lab we're going to build a [REST](https://www.restapitutorial.com/lessons/whatisrest.html#) service using [ASP.NET Core 6.0 Web API](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0).
 
 ## Create a Web API with ASP.NET Core
 
@@ -8,46 +8,48 @@ Here is the API that you'll create:
 
 | API                       | Description                | Request body           | Response body     |
 | ------------------------- | -------------------------- | ---------------------- | ----------------- |
-| GET /api/products	        | Get all products   	       | None	                  | Array of products |
-| GET /api/products/{id}    | Get a product by ID        | None                   | Product           |
-| POST /api/products        | Add a new product          | Product                | Product           |
-| PUT /api/products/{id}    | Update an existing product | Product                |                   |	
-| DELETE /api/products/{id} | Delete a product           | None. No request body- | None              |
+| GET /api/photos	        | Get all photos   	       | None	                  | Array of photos |
+| GET /api/photos/{id}    | Get a photo by ID        | None                   | Photo           |
+| POST /api/photos        | Add a new photo          | Photo                | Photo           |
+| PUT /api/photos/{id}    | Update an existing photo | Photo                |                   |	
+| DELETE /api/photos/{id} | Delete a photo           | None. No request body- | None              |
 
 The client submits a request and receives a response from the application. Within the application we find the controller, the model, and the data access layer. The request comes into the application's controller, and read/write operations occur between the controller and the data access layer. The model is serialized and returned to the client in the response.
 
-The **client** is whatever consumes the web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Postman](https://www.getpostman.com/apps) to test the app. We will write the client in the following lab.
+The **client** is whatever consumes the Web API (browser, mobile app, and so forth). We aren't writing a client in this tutorial. We'll use [Swagger](https://swagger.io/) to test the Backend. We will write the client in the following lab.
 
-A **model** is an object that represents the data in your application. In this case, the only model is a Product item. Models are represented as simple C# classes (POCOs).
+A **model** is an object that represents the data in your application. In this case, the only model is a Photo item. Models are represented as simple C# classes (POCOs).
 
 A **controller** is an object that handles HTTP requests and creates the HTTP response. This app will have a single controller.
 
 ### Prerequisites
 Install the following:
 
-- [.NET Core 3.0.0 SDK](https://www.microsoft.com/net/core) or later.
-- [Visual Studio 2019](https://www.visualstudio.com/downloads/) version 16.4 or later with the ASP.NET and web development workload.
+- [.NET Core 6 SDK](https://www.microsoft.com/net/core) or later.
+- [Visual Studio 2022](https://www.visualstudio.com/downloads/) or later with the ASP.NET and web development workload.
 
 ### Create the project
 
 - Open Visual Studio.
-- In the `Create New Project` window, select the `ASP.NET Core Web Application` project template. 
-    - Go to the folder `Lab04\Start\MarketPlace`.
-    - Name the Solution `BackEnd`. 
-    - Name the Project `BackEnd`
+- In the `Create New Project` window, select the `ASP.NET Core Web Api` project template. 
+    - Go to the folder `Lab04\Start\PhotoSharingApplication`.
+    - Name the Solution `Backend`. 
+    - Name the Project `Backend`
     - Select `Create`
-- In the `Create a new ASP.NET Core Web Application` window:
-    - Select `.NET Core`
-    - Select `ASP .NET Core 3.0`
-    - Select the `API` template
-    - Leave `No Authentication`. 
+- In the `Create a new ASP.NET Core Web Api` window:
+    - Select `.NET 6.0`
+    - In the `Authentication Type` select `None`. 
     - Ensure that the `Configure for Https` checkbox is selected
-    - Do not check `Enable Docker Support`.
+    - Do not check `Enable Docker`.
+    - Ensure that `Use Controllers` is checked
+    - Ensure that `Enable OpenAPI support` is checked
+    - Do not check `Do not use top-level statement` 
+    
     - Click on `Create`
 
 ### Add a model class
 
-A **model** is an object that represents the data in your application. In this case, the only model is a `Product` item, whose properties are `Id` *(int)*, `Name` *(string)*, `Description` *(string)* and `Price` *(decimal)*.
+A **model** is an object that represents the data in your application. In this case, the only model is a `Photo` item, whose properties are `Id` *(int)*, `Title` *(string)* and `Description` *(string)*.
 
 Add a folder named `Models`. 
 - In `Solution Explorer`, right-click the project. 
@@ -56,22 +58,20 @@ Add a folder named `Models`.
 
 Note: You can put model classes anywhere in your project, but the `Models` folder is used by convention.
 
-Add a `Product` class. 
+Add a `Photo` class. 
 - Right-click the `Models` folder and
 - Select `Add` > `Class`. 
-- Name the class `Product` 
+- Name the class `Photo` 
 - Select `Add`.
 
 Replace the generated code with:
 
 ```cs
-namespace BackEnd.Models {
-    public class Product {
-        public int Id { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public decimal Price { get; set; }
-    }
+namespace Backend.Models; 
+public class Photo {
+    public int Id { get; set; }
+    public string Title { get; set; }
+    public string Description { get; set; }
 }
 ```
 
@@ -82,10 +82,10 @@ Ensure that the project compiles first, then let the wizard generate the `Contro
 - Select `Add` > `Controller`. 
 - Select  `API Controller with actions, using Entity Framework`
 - Click `Add`
-- As `Model class` select `Product (BackEnd.Models)`
+- As `Model class` select `Photo (Backend.Models)`
 - As `Data context class`, click on the `+` button
-- Name the context `BackEnd.Models.BackEndContext`
-- Name the Controller `ProductsController`
+- Name the context `Backend.Models.BackendContext`
+- Name the Controller `PhotosController`
 - Click `Add`
 
 After a while you should see some new files. 
@@ -94,63 +94,61 @@ After a while you should see some new files.
 
 The database context is the main class that coordinates [Entity Framework](https://docs.microsoft.com/en-us/ef/core/) functionality for a given data model. This class is created by deriving from the `Microsoft.EntityFrameworkCore.DbContext` class.
 
-The wizard added a `Data` folder in which you can find the `BackEndContext` class.
+The wizard added a `Data` folder in which you can find the `BackendContext` class.
 
 ```cs
 using Microsoft.EntityFrameworkCore;
 
-namespace BackEnd.Models {
-    public class BackEndContext : DbContext {
-        public BackEndContext (DbContextOptions<BackEndContext> options) : base(options) {
+namespace Backend.Models {
+    public class BackendContext : DbContext {
+        public BackendContext (DbContextOptions<BackendContext> options) : base(options) {
         }
 
-        public DbSet<BackEnd.Models.Product> Product { get; set; }
+        public DbSet<Backend.Models.Photo> Photo { get; set; }
     }
 }
 ```
 
-The wizard also configured the context and added it as a Service using the [Dependency Injection](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.0) features of `ASP.NET Core`.
-Open the [`Startup.cs`](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/startup?view=aspnetcore-3.0) file and you will see a method where this happens:
+The wizard also configured the context and added it as a Service using the [Dependency Injection](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-6.0) features of `ASP.NET Core`.
+Open the `Program.cs` file and you will see where this happens:
 
 ```cs
-public void ConfigureServices(IServiceCollection services) {
-    services.AddControllers();
-
-    services.AddDbContext<BackEndContext>(options =>
-        options.UseSqlServer(Configuration.GetConnectionString("BackEndContext")));
-}
+builder.Services.AddDbContext<BackendContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("BackendContext") ?? throw new InvalidOperationException("Connection string 'BackendContext' not found.")));
 ```
-The `BackEndContext` connection string is [configured](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-3.0) in the `appsettings.json` file, as per [Default](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-3.0#default-configuration):
+The `BackendContext` connection string is [configured](https://learn.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-6.0) in the `appsettings.json` file:
 
 ```json
 "ConnectionStrings": {
-    "BackEndContext": "Server=(localdb)\\mssqllocaldb;Database=BackEndContext-7ded1dbd-82d6-4b02-8451-a878c2bcce44;Trusted_Connection=True;MultipleActiveResultSets=true"
-  }
+    "BackendContext": "Server=(localdb)\\mssqllocaldb;Database=Backend.Data;Trusted_Connection=True;MultipleActiveResultSets=true"
+}
 ```
 
 ### The Controller
 
-The wizard took care of the [Controller](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0) by generating a class that derives from [ControllerBase](https://docs.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.controllerbase), which provides many properties and methods that are useful for handling HTTP requests.
+The wizard took care of the [Api Controller]https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0) by generating a class that derives from [ControllerBase](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.mvc.controllerbase?view=aspnetcore-6.0), which provides many properties and methods that are useful for handling HTTP requests.
 
 The `Microsoft.AspNetCore.Mvc` namespace provides attributes that can be used to configure the behavior of web API controllers and action methods.
 
-The [ApiController](https://docs.microsoft.com/dotnet/api/microsoft.aspnetcore.mvc.apicontrollerattribute) attribute was applied to the controller class to enable the following API-specific behaviors:
-- [Attribute routing requirement](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#attribute-routing-requirement)
-- [Automatic HTTP 400 responses](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#automatic-http-400-responses)
-- [Binding source parameter inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#binding-source-parameter-inference)
-- [Multipart/form-data request inference](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#multipartform-data-request-inference)
-- [Problem details for error status codes](https://docs.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-3.0#problem-details-for-error-status-codes) 
+The [ApiController](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#apicontroller-attribute) attribute was applied to the controller class to enable the following API-specific behaviors:
+- [Attribute routing requirement](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#attribute-routing-requirement)
+- [Automatic HTTP 400 responses](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#automatic-http-400-responses)
+- [Binding source parameter inference](https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#binding-source-parameter-inference)
+- [Multipart/form-data request inference]https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#multipartform-data-request-inference)
+- [Problem details for error status codes]https://learn.microsoft.com/en-us/aspnet/core/web-api/?view=aspnetcore-6.0#problem-details-for-error-status-codes) 
 
-The controller and every action were mapped to a route through the use of [routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0) system, in particular [attribute routing](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0#attribute-routing) and [attribute routing using http verbs attributes](https://docs.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-3.0#attribute-routing-with-httpverb-attributes).
+The controller and every action were mapped to a route through the use of [routing](https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0) system, in particular [attribute routing](https://learn.microsoft.com/en-us/aspnet/core/mvc/controllers/routing?view=aspnetcore-6.0#attribute-routing-for-rest-apis).
 
-The Controller makes use of the DI container by explicitly declaring its dependency on the `BackEndContext` in its constructor.
+The Controller makes use of the DI container by explicitly declaring its dependency on the `BackendContext` in its constructor.
 
 ```cs
-public class ProductsController : ControllerBase
+[Route("api/[controller]")]
+[ApiController]
+public class PhotosController : ControllerBase
 {
-    private readonly BackEndContext _context;
+    private readonly BackendContext _context;
 
-    public ProductsController(BackEndContext context)
+    public PhotosController(BackendContext context)
     {
         _context = context;
     }
@@ -158,33 +156,36 @@ public class ProductsController : ControllerBase
 }
 ```
 
-## Getting Product items
+## Getting Photo items
 
-We got two `GetProduct` methods:
+We got two `GetPhoto` methods:
 
 ```cs
-// GET: api/Products
+// GET: api/Photos
 [HttpGet]
-public async Task<ActionResult<IEnumerable<Product>>> GetProduct() {
-    return await _context.Product.ToListAsync();
+public async Task<ActionResult<IEnumerable<Photo>>> GetPhoto()
+{
+    return await _context.Photo.ToListAsync();
 }
 
-// GET: api/Products/5
+// GET: api/Photos/5
 [HttpGet("{id}")]
-public async Task<ActionResult<Product>> GetProduct(int id) {
-    var product = await _context.Product.FindAsync(id);
+public async Task<ActionResult<Photo>> GetPhoto(int id)
+{
+    var photo = await _context.Photo.FindAsync(id);
 
-    if (product == null) {
+    if (photo == null)
+    {
         return NotFound();
     }
 
-    return product;
+    return photo;
 }
 ```
 
-It returns an `Task<ActionResult<IEnumerable<Product>>>`. MVC automatically serializes the list of `Product` to JSON and writes the JSON into the body of the response message. The response code for this method is 200, assuming there are no unhandled exceptions. (Unhandled exceptions are translated into 5xx errors.)
+It returns an `Task<ActionResult<IEnumerable<Photo>>>`. ASP.Net automatically serializes the list of `Photo` to JSON and writes the JSON into the body of the response message. The response code for this method is 200, assuming there are no unhandled exceptions. (Unhandled exceptions are translated into 5xx errors.)
 
-Here is an example HTTP response for the first `GetProduct()` method:
+Here is an example HTTP response for the first `GetPhoto()` method:
 
 ```
 HTTP/1.1 200 OK
@@ -193,36 +194,38 @@ HTTP/1.1 200 OK
    Date: Thu, 18 Jun 2015 20:51:10 GMT
    Content-Length: 82
 
-   [{"Id":1,"Name":"Product 1","Description":"First Sample Product", "Price" : 1234}]
+   [{"Id":1,"Title":"Photo 1","Description":"First Sample Photo"}]
 ```
 
-The second `GetProduct(int id)` method returns a `Task<ActionResult<Product>>` type:
+The second `GetPhoto(int id)` method returns a `Task<ActionResult<Photo>>` type:
 
-- A 404 status code is returned when the product represented by id doesn't exist in the underlying data store. The `NotFound` convenience method is invoked as shorthand for return `new NotFoundResult();`.
-- A 200 status code is returned with the Product object when the product does exist. The `Ok` convenience method is invoked as shorthand for return `new OkObjectResult(product);`.
+- A 404 status code is returned when the photo represented by id doesn't exist in the underlying data store. The `NotFound` convenience method is invoked as shorthand for return `new NotFoundResult();`.
+- A 200 status code is returned with the Photo object when the photo does exist. The `Ok` convenience method is invoked as shorthand for return `new OkObjectResult(photo);`.
 
 ### Create Action
 
-As for REST standards, the action that adds a product to the database is bound to the `POST http verb`.
+As for REST standards, the action that adds a photo to the database is bound to the `POST http verb`.
 
 ```cs
+// POST: api/Photos
+// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 [HttpPost]
-public async Task<ActionResult<Product>> PostProduct(Product product)
+public async Task<ActionResult<Photo>> PostPhoto(Photo photo)
 {
-    _context.Product.Add(product);
+    _context.Photo.Add(photo);
     await _context.SaveChangesAsync();
 
-    return CreatedAtAction("GetProduct", new { id = product.Id }, product);
+    return CreatedAtAction("GetPhoto", new { id = photo.Id }, photo);
 }
 ```
 
-The `PostProduct()` is an `HTTP POST` method, indicated by the `[HttpPost]` attribute. The `[ApiController]` attribute at the top of the controller declaration tells MVC to get the value of the `Product` item from the body of the HTTP request.
+The `PostPhoto()` is an `HTTP POST` method, indicated by the `[HttpPost]` attribute. The `[ApiController]` attribute at the top of the controller declaration tells ASP.Net to get the value of the `Photo` item from the body of the HTTP request.
 
-The `CreatedAtRoute` method:
+The `CreatedAtAction` method:
 
 - Returns a 201 response. HTTP 201 is the standard response for an HTTP POST method that creates a new resource on the server.
-- Adds a Location header to the response. The Location header specifies the URI of the newly created Product item. See [10.2.2 201 Created](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html).
-- Uses the `GetProduct` named route to create the URL. The `GetProduct` named route is defined in `GetProduct(int id)`
+- Adds a Location header to the response. The Location header specifies the URI of the newly created Photo item. See [10.2.2 201 Created](https://www.w3.org/Protocols/rfc2616/rfc2616-sec10.html).
+- Uses the `GetPhoto` named route to create the URL. The `GetPhoto` named route is defined in `GetPhoto(int id)`
 
 Thanks to the `[ApiController]` attribute, the request is checked against the validation engine validation and in case of a BadRequest the default response type for an HTTP 400 response is ValidationProblemDetails. The following request body is an example of the serialized type:
 
@@ -250,15 +253,17 @@ The ValidationProblemDetails type:
 Update is similar to Create, but uses `HTTP PUT`. 
 
 ```cs
+// PUT: api/Photos/5
+// To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
 [HttpPut("{id}")]
-public async Task<IActionResult> PutProduct(int id, Product product)
+public async Task<IActionResult> PutPhoto(int id, Photo photo)
 {
-    if (id != product.Id)
+    if (id != photo.Id)
     {
         return BadRequest();
     }
 
-    _context.Entry(product).State = EntityState.Modified;
+    _context.Entry(photo).State = EntityState.Modified;
 
     try
     {
@@ -266,7 +271,7 @@ public async Task<IActionResult> PutProduct(int id, Product product)
     }
     catch (DbUpdateConcurrencyException)
     {
-        if (!ProductExists(id))
+        if (!PhotoExists(id))
         {
             return NotFound();
         }
@@ -288,29 +293,30 @@ The response is 204 (No Content). According to the HTTP spec, a PUT request requ
 The Delete uses `HTTP DELETE` verb and expects an `id` in the address. 
 
 ```cs
+// DELETE: api/Photos/5
 [HttpDelete("{id}")]
-public async Task<ActionResult<Product>> DeleteProduct(int id)
+public async Task<IActionResult> DeletePhoto(int id)
 {
-    var product = await _context.Product.FindAsync(id);
-    if (product == null)
+    var photo = await _context.Photo.FindAsync(id);
+    if (photo == null)
     {
         return NotFound();
     }
 
-    _context.Product.Remove(product);
+    _context.Photo.Remove(photo);
     await _context.SaveChangesAsync();
 
-    return product;
+    return NoContent();
 }
 ```
 
 It returns 
-- A 200 (Ok) with the deleted product if successful
+- A 200 (Ok) with the deleted photo if successful
 - A 404 (Not Found) if the id is not found in the database
 
 ### Generate migrations and database
 
-The database has not been created. We're going to use [Migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/) to generate the DB and update the schema on a later Lab.
+The database has not been created. We're going to use [Migrations](https://learn.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=vs) to generate the DB and update the schema on a later Lab.
 
 To add an initial migration, run the following command.
 
@@ -322,7 +328,7 @@ Three files are added to your project under the Migrations directory:
 
 - XXXXXXXXXXXXXX_InitialCreate.cs--The main migrations file. Contains the operations necessary to apply the migration (in Up()) and to revert it (in Down()).
 - XXXXXXXXXXXXXX_InitialCreate.Designer.cs--The migrations metadata file. Contains information used by EF.
-- BackEndContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
+- BackendContextModelSnapshot.cs--A snapshot of your current model. Used to determine what changed when adding the next migration.
 
 The timestamp in the filename helps keep them ordered chronologically so you can see the progression of changes.
 
@@ -333,110 +339,15 @@ Next, apply the migration to the database to create the schema.
 Update-Database
 ```
 
-### Try the Get Actions of the controller
+### Try the Actions of the controller
 
-In Visual Studio, press `CTRL+F5` to launch the app. Visual Studio launches a browser and navigates to http://localhost:port/weatherforecast, where port is a randomly chosen port number. Navigate to the Products controller at `http://localhost:port/api/products`.
+Because we checked `Enable OpenApi Support` when we created our project, the template added the [Swagger](https://learn.microsoft.com/en-us/aspnet/core/tutorials/web-api-help-pages-using-swagger?view=aspnetcore-6.0) documentation and the UI to test our controller by using [Swashbuckle](https://github.com/domaindrivendev/Swashbuckle.AspNetCore).
 
-You should see an empty JSON array. 
+In Visual Studio, press `F5` to launch the app. Visual Studio launches a browser and navigates to `https://localhost:{port}/swagger/index.html`, where port is a randomly chosen port number. 
+On this page you can see the autogenerated [Swagger UI](https://swagger.io/tools/swagger-ui/).
+Here, you can try each action of your controller by clicking on the links and buttons to invoke them passing parameters if necessary.
 
-### Install Postman
-
-This tutorial uses Postman to test the web API.
-
-- Install [Postman](https://www.getpostman.com/downloads/)
-- Start the web app.
-- Start Postman.
-- Disable SSL certificate verification
-- From File > Settings (*General tab), disable SSL certificate verification.
-
-### Use Postman to send a Create request
-
-- Set the HTTP method to POST
-- Select the Body radio button
-- Select the raw radio button
-- Set the type to JSON
-- In the key-value editor, enter a product item such as
-
-```json
-{
-  "Name":"Product 1",
-  "Description":"New Product 1",
-  "Price":111
-}
-```
-
-Select `Send`
-
-Select the `Headers` tab in the lower pane and copy the `Location` header.
-
-You can use the `Location` header URI to access the resource you just created.
-
-If you add multiple products and try to navigate to the products again, you should see an array with all the products you created.
-
-For example:
-
-```
-HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-Content-Type: application/json; charset=utf-8
-
-[{"id":1,"name":"Product 1","description":"First Sample Product","price":1234.0},{"id":2,"name":"Product 2","description":"Second Sample Product","price":2345.0},{"id":3,"name":"Product 3","description":"Third Sample Product","price":3456.0},{"id":4,"name":"Product 4","description":"Fourth Sample Product","price":4567.0},{"id":5,"name":"Product 1","description":"First Sample Product","price":1234.0},{"id":6,"name":"Product 2","description":"Second Sample Product","price":2345.0},{"id":7,"name":"Product 3","description":"Third Sample Product","price":3456.0},{"id":8,"name":"Product 4","description":"Fourth Sample Product","price":4567.0}]
-```
-
-Navigate to `http://localhost:port/api/products/1`
-
-You should see this response:
-
-```
-HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-Content-Type: application/json; charset=utf-8
-
-{"id":1,"name":"Product 1","description":"First Sample Product","price":1234.0}
-```
-
-Navigate to `http://localhost:port/api/products/99`
-
-You should see this response header:
-
-```
-HTTP/1.1 404 Not Found
-Content-Length: 0
-```
-
-### Try the Update Action
-
-You can use POSTMAN to test the Update action.
-
-- Set the HTTP method to PUT
-- Select the Body radio button
-- Select the raw radio button
-- Set the type to JSON
-- In the key-value editor, enter a product item such as
-
-```json
-{
-  "Id":1,
-  "Name":"Product 111",
-  "Description":"Modified description",
-  "Price":1111
-}
-```
-
-Select `Send`
-
-
-### Try the Delete Action
-
-You can use POSTMAN to test the Delete action.
-
-- Set the HTTP method to DELETE
-- Set the address to `http://localhost:port/api/products/1`
-
-Select `Send`
-
-Check that the response contains the first product.
-If you call the action to get all the products, you should not see the product with id 1 anymore.
+The two `GET` actions should not return anything yet, but if you add some data by selecting the `POST` action, you should be able to read the data back by going to the `GET` actions again. 
 
 Our service is ready. In the next lab we will setup the client side. 
 
