@@ -4,6 +4,7 @@ import CreateView from '../views/CreateView.vue'
 import UpdateView from '../views/UpdateView.vue'
 import DetailsView from '../views/DetailsView.vue'
 import DeleteView from '../views/DeleteView.vue'
+import LoginCallBackView from '../views/LoginCallBackView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -32,6 +33,11 @@ const router = createRouter({
       path: '/delete/:id',
       name: 'delete',
       component: DeleteView
+    },
+    {
+      path: '/callback',
+      name: 'callback',
+      component: LoginCallBackView
     },
     {
       path: '/about',

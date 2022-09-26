@@ -1,3 +1,4 @@
+import applicationUserManager from './applicationusermanager'
 const datalayer = {
   serviceUrl: 'https://localhost:7241/api/photos',
   async getPhotos () {
@@ -9,14 +10,22 @@ const datalayer = {
     return response.json()
   },
   async insertPhoto (photo) {
+    const user = await applicationUserManager.getUser()
     const response = await fetch(this.serviceUrl, {
       method: 'POST',
       body: JSON.stringify(photo),
       headers: new Headers({
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + (user ? user.access_token : '')
       })
     })
-    return response.json()
+    let result
+    if (response.status !== 201) {
+      result = response.statusText
+    } else {
+      result = await response.json()
+    }
+    return result
   },
   async updatePhoto (id, photo) {
     return fetch(`${this.serviceUrl}/${id}`, {

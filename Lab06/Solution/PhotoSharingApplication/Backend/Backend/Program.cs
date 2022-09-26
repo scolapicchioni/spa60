@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Backend.Data;
+using Microsoft.IdentityModel.Tokens;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddCors(options =>
@@ -21,6 +23,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddAuthentication("Bearer")
+.AddJwtBearer("Bearer", options => {
+    options.Authority = "https://localhost:5001";
+
+    options.TokenValidationParameters = new TokenValidationParameters {
+        ValidateAudience = false
+    };
+});
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -33,6 +44,7 @@ app.UseHttpsRedirection();
 
 app.UseCors("frontend");
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
